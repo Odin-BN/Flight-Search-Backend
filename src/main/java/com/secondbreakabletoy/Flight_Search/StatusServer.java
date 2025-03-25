@@ -10,4 +10,5 @@ public class StatusServer {
     public String status(){
         return "Server working";
     }
+
 }

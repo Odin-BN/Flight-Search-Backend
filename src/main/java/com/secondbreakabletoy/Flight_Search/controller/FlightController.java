@@ -1,6 +1,7 @@
 package com.secondbreakabletoy.Flight_Search.controller;
 
 
+import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
 import com.secondbreakabletoy.Flight_Search.services.FlightServices;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,11 @@ public class FlightController {
     @GetMapping("/airlines")
     public String getNameByCode(@RequestParam String airlineCodes) {
         return flightServices.getNameByCode(airlineCodes);
+    }
+
+    @GetMapping("/FlightSearch")
+    public String getFlightOffers(@RequestBody FlightSearch flightSearch){
+        return flightServices.getFlightOffers(flightSearch);
     }
 
 }

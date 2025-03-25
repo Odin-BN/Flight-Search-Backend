@@ -1,5 +1,6 @@
 package com.secondbreakabletoy.Flight_Search.services;
 
+import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -17,6 +18,7 @@ public class FlightServices {
     private final String AUTH_URL = "https://test.api.amadeus.com/v1/security/oauth2/token";
     private final String LOCATIONS_URL = "https://test.api.amadeus.com/v1/reference-data/locations";
     private final String AIRLINES_URL = "https://test.api.amadeus.com/v1/reference-data/airlines";
+    private final String FLIGHT_OFFERS_URL = "https://test.api.amadeus.com/v2/shopping/flight-offers";
 
     public FlightServices(WebClient.Builder webClientBuilder){
         this.webClient = webClientBuilder.baseUrl(AUTH_URL).build();
@@ -97,6 +99,39 @@ public class FlightServices {
                     .block();
         } catch (WebClientResponseException e) {
             throw new RuntimeException("Error obteniendo el nombre por el codigo: " + e.getResponseBodyAsString());
+        }
+    }
+
+    public String getFlightOffers(FlightSearch flightSearch){
+        String token = getAccessToken();
+        //String originLocationCode, String destinationLocationCode, String departureDate, String returnDate, String adults, boolean nonStop
+
+        String FOS_URL = "?originLocationCode=" + flightSearch.getOriginLocationCode()
+                + "&destinationLocationCode=" + flightSearch.getDestinationLocationCode()
+                + "&departureDate=" + flightSearch.getDepartureDate();
+        if (flightSearch.getReturnDate() != null){
+            FOS_URL = FOS_URL + "&returnDate=" + flightSearch.getReturnDate();
+        }
+        FOS_URL = FOS_URL + "&adults=" + flightSearch.getAdults();
+
+        if (flightSearch.getNonStop()){
+            FOS_URL = FOS_URL + "&nonStop=true";
+        }
+
+
+
+        try {
+            WebClient client = WebClient.builder()
+                    .baseUrl(FLIGHT_OFFERS_URL)
+                    .defaultHeader("Authorization", "Bearer " + token)
+                    .build();
+            return client.get()
+                    .uri(FOS_URL)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+        } catch (WebClientResponseException e) {
+            throw new RuntimeException("Error obteniendo las busquedas disponibles: " + e.getResponseBodyAsString());
         }
     }
 
