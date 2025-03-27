@@ -6,6 +6,7 @@ import com.secondbreakabletoy.Flight_Search.services.FlightServices;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:8080")
 @RequestMapping("/amadeus")
 public class FlightController {
 
@@ -30,9 +31,9 @@ public class FlightController {
         return flightServices.getNameByCode(airlineCodes);
     }
 
-    @GetMapping("/FlightSearch")
+    @PostMapping("/FlightSearch")
     public String getFlightOffers(@RequestBody FlightSearch flightSearch){
-        return flightServices.getFlightOffers(flightSearch);
+        System.out.println(flightServices.getFlightOffers(flightSearch));
+        return "Prueba1";
     }
-
 }

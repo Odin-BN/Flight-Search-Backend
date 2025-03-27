@@ -8,14 +8,16 @@ public class FlightSearch {
     private String returnDate;
     private String adults;
     private boolean nonStop;
+    private String currencyCode;
 
-    public FlightSearch(String originLocationCode, String destinationLocationCode, String departureDate, String returnDate, String adults, boolean nonStop){
+    public FlightSearch(String originLocationCode, String destinationLocationCode, String departureDate, String returnDate, String adults, boolean nonStop, String currencyCode){
         this.originLocationCode = originLocationCode;
         this.destinationLocationCode = destinationLocationCode;
         this.departureDate = departureDate;
         this.returnDate = returnDate;
         this.adults = adults;
         this.nonStop = nonStop;
+        this.currencyCode = currencyCode;
     }
 
     public String getOriginLocationCode() {
@@ -66,5 +68,12 @@ public class FlightSearch {
         this.nonStop = nonStop;
     }
 
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public void setCurrencyCode(String currencyCode) {
+        this.currencyCode = currencyCode;
+    }
 
 }

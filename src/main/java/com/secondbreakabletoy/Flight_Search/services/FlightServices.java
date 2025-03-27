@@ -118,7 +118,7 @@ public class FlightServices {
             FOS_URL = FOS_URL + "&nonStop=true";
         }
 
-
+        FOS_URL = FOS_URL + "&currencyCode=" + flightSearch.getCurrencyCode();
 
         try {
             WebClient client = WebClient.builder()
