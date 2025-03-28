@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import io.github.cdimascio.dotenv.Dotenv;
 
 import java.util.Map;
 
@@ -12,9 +13,11 @@ import java.util.Map;
 @Service
 public class FlightServices {
 
+    Dotenv dotenv = Dotenv.load();
+
     private final WebClient webClient;
-    private final String api_key = System.getenv("API_KEY");
-    private final String api_secret = System.getenv("API_SECRET");
+    private final String api_key = dotenv.get("API_KEY");
+    private final String api_secret = dotenv.get("API_SECRET");
     private final String AUTH_URL = "https://test.api.amadeus.com/v1/security/oauth2/token";
     private final String LOCATIONS_URL = "https://test.api.amadeus.com/v1/reference-data/locations";
     private final String AIRLINES_URL = "https://test.api.amadeus.com/v1/reference-data/airlines";
@@ -104,7 +107,6 @@ public class FlightServices {
 
     public String getFlightOffers(FlightSearch flightSearch){
         String token = getAccessToken();
-        //String originLocationCode, String destinationLocationCode, String departureDate, String returnDate, String adults, boolean nonStop
 
         String FOS_URL = "?originLocationCode=" + flightSearch.getOriginLocationCode()
                 + "&destinationLocationCode=" + flightSearch.getDestinationLocationCode()
@@ -116,6 +118,8 @@ public class FlightServices {
 
         if (flightSearch.getNonStop()){
             FOS_URL = FOS_URL + "&nonStop=true";
+        } else {
+            FOS_URL = FOS_URL + "&nonStop=false";
         }
 
         FOS_URL = FOS_URL + "&currencyCode=" + flightSearch.getCurrencyCode();
