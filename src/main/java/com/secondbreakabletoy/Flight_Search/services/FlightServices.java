@@ -1,5 +1,9 @@
 package com.secondbreakabletoy.Flight_Search.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.secondbreakabletoy.Flight_Search.model.FlightModel;
 import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -7,6 +11,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -22,6 +28,7 @@ public class FlightServices {
     private final String LOCATIONS_URL = "https://test.api.amadeus.com/v1/reference-data/locations";
     private final String AIRLINES_URL = "https://test.api.amadeus.com/v1/reference-data/airlines";
     private final String FLIGHT_OFFERS_URL = "https://test.api.amadeus.com/v2/shopping/flight-offers";
+    private String jsonResponse;
 
     public FlightServices(WebClient.Builder webClientBuilder){
         this.webClient = webClientBuilder.baseUrl(AUTH_URL).build();
@@ -105,8 +112,9 @@ public class FlightServices {
         }
     }
 
-    public String getFlightOffers(FlightSearch flightSearch){
+    public List<FlightModel> getFlightOffers(FlightSearch flightSearch){
         String token = getAccessToken();
+        List<FlightModel> flights = new ArrayList<>();
 
         String FOS_URL = "?originLocationCode=" + flightSearch.getOriginLocationCode()
                 + "&destinationLocationCode=" + flightSearch.getDestinationLocationCode()
@@ -129,14 +137,74 @@ public class FlightServices {
                     .baseUrl(FLIGHT_OFFERS_URL)
                     .defaultHeader("Authorization", "Bearer " + token)
                     .build();
-            return client.get()
+
+            jsonResponse = client.get()
                     .uri(FOS_URL)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
+            //System.out.println(jsonResponse);
+
         } catch (WebClientResponseException e) {
             throw new RuntimeException("Error obteniendo las busquedas disponibles: " + e.getResponseBodyAsString());
         }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            JsonNode dataArray = root.path("data");
+            JsonNode carriers = root.path("dictionaries").path("carriers");
+
+            for (JsonNode flightNode : dataArray) {
+                FlightModel flight = new FlightModel();
+                JsonNode itinerary = flightNode.path("itineraries").get(0);
+                JsonNode firstSegment = itinerary.path("segments").get(0);
+
+                //Extraer la informacion para cada propiedad que se pide de los vuelos, esto es para el primer vuelo
+                flight.setDepartureDate_first(firstSegment.path("departure").path("at").asText().split("T")[0]);
+                //System.out.println("Fecha de salida de prueba: " + flight.getDepartureDate_first());
+                flight.setDepartureTime_first(firstSegment.path("departure").path("at").asText().split("T")[1]);
+                flight.setArrivalDate_first(firstSegment.path("arrival").path("at").asText().split("T")[0]);
+                flight.setArrivalTime_first(firstSegment.path("arrival").path("at").asText().split("T")[1]);
+                flight.setDepartureAirport_first(firstSegment.path("departure").path("iataCode").asText());
+                flight.setArrivalAirport_first(firstSegment.path("arrival").path("iataCode").asText());
+                flight.setAirlineCode_first(firstSegment.path("carrierCode").asText());
+                flight.setAirlineName_first(carriers.path(flight.getAirlineCode_first()).asText());
+
+
+                //Informacion del segundo vuelo si es que existe debido a escala
+                if (!flightSearch.getNonStop()) {
+                    JsonNode secondSegment = itinerary.path("segments").get(1);
+
+                    flight.setDepartureDate_second(secondSegment.path("departure").path("at").asText().split("T")[0]);
+                    flight.setDepartureTime_second(secondSegment.path("departure").path("at").asText().split("T")[1]);
+                    flight.setArrivalDate_second(secondSegment.path("arrival").path("at").asText().split("T")[0]);
+                    flight.setArrivalTime_second(secondSegment.path("arrival").path("at").asText().split("T")[1]);
+                    flight.setDepartureAirport_second(secondSegment.path("departure").path("iataCode").asText());
+                    flight.setArrivalAirport_second(secondSegment.path("arrival").path("iataCode").asText());
+                    flight.setAirlineCode_second(secondSegment.path("carrierCode").asText());
+                    flight.setAirlineName_second(carriers.path(flight.getAirlineCode_second()).asText());
+                }
+
+                //Precio del vuelo y por persona junto con equipaje y eso
+                flight.setTotalFlightTime(itinerary.path("duration").asText());
+                flight.setTotalPrice(flightNode.path("price").path("grandTotal").asDouble());
+                flight.setPricePerTraveler(flightNode.path("travelerPricings").get(0).path("price").path("total").asDouble());
+
+                flights.add(flight);
+                //private List<String> segmentDurations;
+                //private List<String> layoverTimes;
+            }
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            System.out.println("Error al procesar el JSON");
+        }
+
+
+        return flights;
+
     }
 
 }

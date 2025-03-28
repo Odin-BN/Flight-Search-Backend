@@ -1,9 +1,12 @@
 package com.secondbreakabletoy.Flight_Search.controller;
 
 
+import com.secondbreakabletoy.Flight_Search.model.FlightModel;
 import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
 import com.secondbreakabletoy.Flight_Search.services.FlightServices;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:8080")
@@ -32,8 +35,7 @@ public class FlightController {
     }
 
     @PostMapping("/FlightSearch")
-    public String getFlightOffers(@RequestBody FlightSearch flightSearch){
-        System.out.println(flightServices.getFlightOffers(flightSearch));
-        return "Prueba1";
+    public List<FlightModel> getFlightOffers(@RequestBody FlightSearch flightSearch){
+        return flightServices.getFlightOffers(flightSearch);
     }
 }
