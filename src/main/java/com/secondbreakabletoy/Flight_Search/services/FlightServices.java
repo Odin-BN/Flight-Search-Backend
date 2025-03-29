@@ -143,7 +143,7 @@ public class FlightServices {
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-            //System.out.println(jsonResponse);
+            //System.out.println(jsonResponse); //para checar la respuesta de la API
 
         } catch (WebClientResponseException e) {
             throw new RuntimeException("Error obteniendo las busquedas disponibles: " + e.getResponseBodyAsString());
@@ -156,10 +156,16 @@ public class FlightServices {
             JsonNode dataArray = root.path("data");
             JsonNode carriers = root.path("dictionaries").path("carriers");
 
+            float num = 0; //para pruebas
+
             for (JsonNode flightNode : dataArray) {
+                num = num + 1; //para pruebas
+
                 FlightModel flight = new FlightModel();
                 JsonNode itinerary = flightNode.path("itineraries").get(0);
                 JsonNode firstSegment = itinerary.path("segments").get(0);
+
+                //Crear una funcion que haga lo de abajo para la cantidad de vuelos que detecte, condiciones por si son 3, que cheque cual tiene escala y cual no
 
                 //Extraer la informacion para cada propiedad que se pide de los vuelos, esto es para el primer vuelo
                 flight.setDepartureDate_first(firstSegment.path("departure").path("at").asText().split("T")[0]);
@@ -193,6 +199,15 @@ public class FlightServices {
                 flight.setPricePerTraveler(flightNode.path("travelerPricings").get(0).path("price").path("total").asDouble());
 
                 flights.add(flight);
+
+                //de prueba para checar como se estan guardando los vuelos
+                ObjectMapper objectMapper1 = new ObjectMapper();
+                try {
+                    String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flight);
+                    System.out.println(flight_json);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 //private List<String> segmentDurations;
                 //private List<String> layoverTimes;
             }
