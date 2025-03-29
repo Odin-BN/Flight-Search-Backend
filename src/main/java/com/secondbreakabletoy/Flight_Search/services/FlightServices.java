@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secondbreakabletoy.Flight_Search.model.FlightModel;
+import com.secondbreakabletoy.Flight_Search.model.FlightPrices;
 import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
+import com.secondbreakabletoy.Flight_Search.model.FlightSegments;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -114,7 +116,6 @@ public class FlightServices {
 
     public List<FlightModel> getFlightOffers(FlightSearch flightSearch){
         String token = getAccessToken();
-        List<FlightModel> flights = new ArrayList<>();
 
         String FOS_URL = "?originLocationCode=" + flightSearch.getOriginLocationCode()
                 + "&destinationLocationCode=" + flightSearch.getDestinationLocationCode()
@@ -149,12 +150,16 @@ public class FlightServices {
             throw new RuntimeException("Error obteniendo las busquedas disponibles: " + e.getResponseBodyAsString());
         }
 
+        //////////////////////////////////////////////////////////////
+
         ObjectMapper objectMapper = new ObjectMapper();
+        List<FlightModel> flights = new ArrayList<>();
 
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
+            JsonNode dictionary = root.path("dictionaries");
             JsonNode dataArray = root.path("data");
-            JsonNode carriers = root.path("dictionaries").path("carriers");
+            //JsonNode carriers = root.path("dictionaries").path("carriers");
 
             float num = 0; //para pruebas
 
@@ -162,41 +167,57 @@ public class FlightServices {
                 num = num + 1; //para pruebas
 
                 FlightModel flight = new FlightModel();
+                List<FlightSegments> flightsSegmentsList = new ArrayList<>();
+                List<FlightPrices> flightsPricesList = new ArrayList<>();
                 JsonNode itinerary = flightNode.path("itineraries").get(0);
-                JsonNode firstSegment = itinerary.path("segments").get(0);
+                JsonNode Segments = itinerary.path("segments");
 
-                //Crear una funcion que haga lo de abajo para la cantidad de vuelos que detecte, condiciones por si son 3, que cheque cual tiene escala y cual no
+                for (JsonNode flightSegments : Segments) {
+                    FlightSegments flightSeg = new FlightSegments();
 
-                //Extraer la informacion para cada propiedad que se pide de los vuelos, esto es para el primer vuelo
-                flight.setDepartureDate_first(firstSegment.path("departure").path("at").asText().split("T")[0]);
-                //System.out.println("Fecha de salida de prueba: " + flight.getDepartureDate_first());
-                flight.setDepartureTime_first(firstSegment.path("departure").path("at").asText().split("T")[1]);
-                flight.setArrivalDate_first(firstSegment.path("arrival").path("at").asText().split("T")[0]);
-                flight.setArrivalTime_first(firstSegment.path("arrival").path("at").asText().split("T")[1]);
-                flight.setDepartureAirport_first(firstSegment.path("departure").path("iataCode").asText());
-                flight.setArrivalAirport_first(firstSegment.path("arrival").path("iataCode").asText());
-                flight.setAirlineCode_first(firstSegment.path("carrierCode").asText());
-                flight.setAirlineName_first(carriers.path(flight.getAirlineCode_first()).asText());
+                    flightSeg.setDepartureDate(flightSegments.path("departure").path("at").asText().split("T")[0]);
+                    flightSeg.setDepartureTime(flightSegments.path("departure").path("at").asText().split("T")[1]);
+                    flightSeg.setArrivalDate(flightSegments.path("arrival").path("at").asText().split("T")[0]);
+                    flightSeg.setArrivalTime(flightSegments.path("arrival").path("at").asText().split("T")[1]);
+                    flightSeg.setDepartureAirport(flightSegments.path("departure").path("iataCode").asText());
+                    flightSeg.setArrivalAirport(flightSegments.path("arrival").path("iataCode").asText());
+                    flightSeg.setAirlineCode(flightSegments.path("carrierCode").asText());
+                    flightSeg.setAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
+                    flightSeg.setOperatingAirlineCode(flightSegments.path("operating").path("carrierCode").asText());
+                    flightSeg.setOperatingAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
+                    flightSeg.setDuration(flightSegments.path("duration").asText());
+                    flightSeg.setFlightNumber(flightSegments.path("number").asText());
+                    flightSeg.setAircraftCode(flightSegments.path("aircraft").path("code").asText());
+                    flightSeg.setAircraftName(dictionary.path("aircraft").path(flightSeg.getAircraftCode()).asText());
 
-
-                //Informacion del segundo vuelo si es que existe debido a escala
-                if (!flightSearch.getNonStop()) {
-                    JsonNode secondSegment = itinerary.path("segments").get(1);
-
-                    flight.setDepartureDate_second(secondSegment.path("departure").path("at").asText().split("T")[0]);
-                    flight.setDepartureTime_second(secondSegment.path("departure").path("at").asText().split("T")[1]);
-                    flight.setArrivalDate_second(secondSegment.path("arrival").path("at").asText().split("T")[0]);
-                    flight.setArrivalTime_second(secondSegment.path("arrival").path("at").asText().split("T")[1]);
-                    flight.setDepartureAirport_second(secondSegment.path("departure").path("iataCode").asText());
-                    flight.setArrivalAirport_second(secondSegment.path("arrival").path("iataCode").asText());
-                    flight.setAirlineCode_second(secondSegment.path("carrierCode").asText());
-                    flight.setAirlineName_second(carriers.path(flight.getAirlineCode_second()).asText());
+                    flightsSegmentsList.add(flightSeg);
                 }
 
-                //Precio del vuelo y por persona junto con equipaje y eso
+                flight.setFlightSegments(flightsSegmentsList); //Agrega la lista de segmentos del vuelo por oferta
+
+                JsonNode pricesBySegment = flightNode.path("travelerPricings").get(0).path("fareDetailsBySegment"); //revisar si el get(0) esta bien
+
+                for (JsonNode PriceSegment : pricesBySegment) {
+                    FlightPrices flightPrices = new FlightPrices();
+                    //los precios por segmento
+                    flightPrices.setCabinType(PriceSegment.path("cabin").asText());
+                    flightPrices.setClassType(PriceSegment.path("class").asText());
+                    flightPrices.setCheckedBagsWeight(PriceSegment.path("includedCheckedBags").path("weight").asText());
+                    flightPrices.setCheckedBagsUnit(PriceSegment.path("includedCheckedBags").path("weightUnit").asText());
+
+                    flightsPricesList.add(flightPrices);
+                }
+
+                flight.setFlightPrices(flightsPricesList); //Agrega la lista de precios de los segmentos de los vuelos de la oferta
+
+                //Imprimir un valor para probar
+                //System.out.println("Fecha de salida de prueba: " + flight.getDepartureDate_first());
+
+                //Precio del vuelo en general
                 flight.setTotalFlightTime(itinerary.path("duration").asText());
                 flight.setTotalPrice(flightNode.path("price").path("grandTotal").asDouble());
                 flight.setPricePerTraveler(flightNode.path("travelerPricings").get(0).path("price").path("total").asDouble());
+                flight.setBasePrice(flightNode.path("travelerPricings").get(0).path("price").path("base").asDouble());
 
                 flights.add(flight);
 
@@ -206,6 +227,7 @@ public class FlightServices {
                     String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flight);
                     System.out.println(flight_json);
                 } catch (JsonProcessingException e) {
+                    System.out.println("Error imprimiendo el JSON");
                     throw new RuntimeException(e);
                 }
                 //private List<String> segmentDurations;
