@@ -7,11 +7,10 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FlightModel {
 
-    private List<FlightSegments> flightSegments;
+    //private List<FlightSegments> flightSegments;
     private List<FlightPrices> flightPrices;
-    private String totalFlightTime;
-    private List<String> segmentDurations;
-    private List<String> layoverTimes;
+    private List<FlightItineraries> infoPerItinerary;
+    //private List<String> layoverTimes;
     private double totalPrice;
     private double pricePerTraveler;
     private double basePrice;
@@ -19,24 +18,14 @@ public class FlightModel {
 
     public FlightModel() {};
 
-    public FlightModel(List<FlightSegments> flightSegments, List<FlightPrices> flightPrices, String totalFlightTime, List<String> segmentDurations, List<String> layoverTimes, double totalPrice, double pricePerTraveler, double feesPrice, double basePrice) {
-        this.flightSegments = flightSegments;
+    public FlightModel(List<FlightPrices> flightPrices, List<FlightItineraries> infoPerItinerary, double totalPrice,
+                       double pricePerTraveler, double feesPrice, double basePrice) {
         this.flightPrices = flightPrices;
-        this.totalFlightTime = totalFlightTime;
-        this.segmentDurations = segmentDurations;
-        this.layoverTimes = layoverTimes;
+        this.infoPerItinerary = infoPerItinerary;
         this.totalPrice = totalPrice;
         this.pricePerTraveler = pricePerTraveler;
         this.feesPrice = feesPrice;
         this.basePrice = basePrice;
-    }
-
-    public List<FlightSegments> getFlightSegments() {
-        return flightSegments;
-    }
-
-    public void setFlightSegments(List<FlightSegments> flightSegments) {
-        this.flightSegments = flightSegments;
     }
 
     public List<FlightPrices> getFlightPrices() {
@@ -47,28 +36,12 @@ public class FlightModel {
         this.flightPrices = flightPrices;
     }
 
-    public String getTotalFlightTime() {
-        return totalFlightTime;
+    public List<FlightItineraries> getInfoPerItinerary() {
+        return infoPerItinerary;
     }
 
-    public void setTotalFlightTime(String totalFlightTime) {
-        this.totalFlightTime = totalFlightTime;
-    }
-
-    public List<String> getSegmentDurations() {
-        return segmentDurations;
-    }
-
-    public void setSegmentDurations(List<String> segmentDurations) {
-        this.segmentDurations = segmentDurations;
-    }
-
-    public List<String> getLayoverTimes() {
-        return layoverTimes;
-    }
-
-    public void setLayoverTimes(List<String> layoverTimes) {
-        this.layoverTimes = layoverTimes;
+    public void setInfoPerItinerary(List<FlightItineraries> infoPerItinerary) {
+        this.infoPerItinerary = infoPerItinerary;
     }
 
     public double getTotalPrice() {

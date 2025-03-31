@@ -10,7 +10,8 @@ public class FlightSearch {
     private boolean nonStop;
     private String currencyCode;
 
-    public FlightSearch(String originLocationCode, String destinationLocationCode, String departureDate, String returnDate, String adults, boolean nonStop, String currencyCode){
+    public FlightSearch(String originLocationCode, String destinationLocationCode, String departureDate,
+                        String returnDate, String adults, boolean nonStop, String currencyCode){
         this.originLocationCode = originLocationCode;
         this.destinationLocationCode = destinationLocationCode;
         this.departureDate = departureDate;

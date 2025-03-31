@@ -3,17 +3,16 @@ package com.secondbreakabletoy.Flight_Search.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.secondbreakabletoy.Flight_Search.model.FlightModel;
-import com.secondbreakabletoy.Flight_Search.model.FlightPrices;
-import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
-import com.secondbreakabletoy.Flight_Search.model.FlightSegments;
+import com.secondbreakabletoy.Flight_Search.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -169,31 +168,66 @@ public class FlightServices {
                 FlightModel flight = new FlightModel();
                 List<FlightSegments> flightsSegmentsList = new ArrayList<>();
                 List<FlightPrices> flightsPricesList = new ArrayList<>();
-                JsonNode itinerary = flightNode.path("itineraries").get(0);
-                JsonNode Segments = itinerary.path("segments");
+                List<FlightItineraries> flightsInfoItinerary = new ArrayList<>();
+                JsonNode itinerary = flightNode.path("itineraries");
 
-                for (JsonNode flightSegments : Segments) {
-                    FlightSegments flightSeg = new FlightSegments();
 
-                    flightSeg.setDepartureDate(flightSegments.path("departure").path("at").asText().split("T")[0]);
-                    flightSeg.setDepartureTime(flightSegments.path("departure").path("at").asText().split("T")[1]);
-                    flightSeg.setArrivalDate(flightSegments.path("arrival").path("at").asText().split("T")[0]);
-                    flightSeg.setArrivalTime(flightSegments.path("arrival").path("at").asText().split("T")[1]);
-                    flightSeg.setDepartureAirport(flightSegments.path("departure").path("iataCode").asText());
-                    flightSeg.setArrivalAirport(flightSegments.path("arrival").path("iataCode").asText());
-                    flightSeg.setAirlineCode(flightSegments.path("carrierCode").asText());
-                    flightSeg.setAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
-                    flightSeg.setOperatingAirlineCode(flightSegments.path("operating").path("carrierCode").asText());
-                    flightSeg.setOperatingAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
-                    flightSeg.setDuration(flightSegments.path("duration").asText());
-                    flightSeg.setFlightNumber(flightSegments.path("number").asText());
-                    flightSeg.setAircraftCode(flightSegments.path("aircraft").path("code").asText());
-                    flightSeg.setAircraftName(dictionary.path("aircraft").path(flightSeg.getAircraftCode()).asText());
+                for (JsonNode itinerary_Seg : itinerary) {
+                    FlightItineraries flightPerItinerary = new FlightItineraries();
 
-                    flightsSegmentsList.add(flightSeg);
+                    flightPerItinerary.setTotalDuration(convertDuration(Duration.parse(itinerary_Seg.path("duration").asText())));
+
+                    JsonNode Segments = itinerary_Seg.path("segments");
+                    List<String> waitTimes = new ArrayList<>();
+
+                    if (Segments.size() == 2) {
+                        String itinerary_dur = itinerary_Seg.path("duration").asText();
+                        String seg1_dur = Segments.get(0).path("duration").asText();
+                        String seg2_dur = Segments.get(1).path("duration").asText();
+
+                        String resultWaitTime = differenceDurations(itinerary_dur, seg1_dur, seg2_dur);
+
+                        waitTimes.add(resultWaitTime);
+
+                    } else {
+                        waitTimes.add("0");
+                    }
+
+                    for (JsonNode flightSegments : Segments) {
+                        FlightSegments flightSeg = new FlightSegments();
+
+                        flightSeg.setDepartureDate(flightSegments.path("departure").path("at").asText().split("T")[0]);
+                        flightSeg.setDepartureTime(flightSegments.path("departure").path("at").asText().split("T")[1]);
+                        flightSeg.setArrivalDate(flightSegments.path("arrival").path("at").asText().split("T")[0]);
+                        flightSeg.setArrivalTime(flightSegments.path("arrival").path("at").asText().split("T")[1]);
+                        flightSeg.setDepartureAirport(flightSegments.path("departure").path("iataCode").asText());
+                        flightSeg.setArrivalAirport(flightSegments.path("arrival").path("iataCode").asText());
+                        flightSeg.setAirlineCode(flightSegments.path("carrierCode").asText());
+                        flightSeg.setAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
+                        flightSeg.setOperatingAirlineCode(flightSegments.path("operating").path("carrierCode").asText());
+                        flightSeg.setOperatingAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
+
+                        /*String dur = flightSegments.path("duration").asText();
+                        Duration durTime = Duration.parse(dur);
+                        long hours = durTime.toHours();
+                        long minutes = durTime.toMinutes();*/
+                        flightSeg.setDuration(convertDuration(Duration.parse(flightSegments.path("duration").asText())));
+                        //convierte la duracion del formato PT8H15M --> 8h 15m
+
+                        flightSeg.setFlightNumber(flightSegments.path("number").asText());
+                        flightSeg.setAircraftCode(flightSegments.path("aircraft").path("code").asText());
+                        flightSeg.setAircraftName(dictionary.path("aircraft").path(flightSeg.getAircraftCode()).asText());
+
+                        flightsSegmentsList.add(flightSeg);
+                    }
+
+                    flightPerItinerary.setFlightSegments(flightsSegmentsList); //Agrega la lista de segmentos del vuelo por oferta
+                    flightPerItinerary.setWaitTime(waitTimes); //Agrega la lista de los tiempos de espera de cada segmento del itinerario
+                    //fli.setFlightSegments(flightsSegmentsList);
+                    flightsInfoItinerary.add(flightPerItinerary); // Agregar el intinerario actual a la lista de itinerarios que luego se agrega al modelo del vuelo
                 }
 
-                flight.setFlightSegments(flightsSegmentsList); //Agrega la lista de segmentos del vuelo por oferta
+                flight.setInfoPerItinerary(flightsInfoItinerary); //se agrega la lista de itinerarios al vuelo
 
                 JsonNode pricesBySegment = flightNode.path("travelerPricings").get(0).path("fareDetailsBySegment"); //revisar si el get(0) esta bien
 
@@ -205,6 +239,8 @@ public class FlightServices {
                     flightPrices.setCheckedBagsWeight(PriceSegment.path("includedCheckedBags").path("weight").asText());
                     flightPrices.setCheckedBagsUnit(PriceSegment.path("includedCheckedBags").path("weightUnit").asText());
 
+                    //Agregar las diferente ammenities
+
                     flightsPricesList.add(flightPrices);
                 }
 
@@ -214,7 +250,7 @@ public class FlightServices {
                 //System.out.println("Fecha de salida de prueba: " + flight.getDepartureDate_first());
 
                 //Precio del vuelo en general
-                flight.setTotalFlightTime(itinerary.path("duration").asText());
+                //flight.setTotalFlightTime(itinerary.path("duration").asText());
                 flight.setTotalPrice(flightNode.path("price").path("grandTotal").asDouble());
                 flight.setPricePerTraveler(flightNode.path("travelerPricings").get(0).path("price").path("total").asDouble());
                 flight.setBasePrice(flightNode.path("travelerPricings").get(0).path("price").path("base").asDouble());
@@ -242,6 +278,22 @@ public class FlightServices {
 
         return flights;
 
+    }
+
+    public String differenceDurations(String itinerary_dur, String seg1_dur, String seg2_dur) {
+        Duration result = Duration.parse(itinerary_dur);
+
+        result = result.minus(Duration.parse(seg1_dur));
+        result = result.minus(Duration.parse(seg2_dur));
+
+        return convertDuration(result);
+    }
+
+    public String convertDuration(Duration dur) {
+        long hours = dur.toHours();
+        long minutes = dur.toMinutes();
+
+        return (hours > 0 ? hours + "h " : "") + (minutes > 0? minutes + "m " :"");
     }
 
 }
