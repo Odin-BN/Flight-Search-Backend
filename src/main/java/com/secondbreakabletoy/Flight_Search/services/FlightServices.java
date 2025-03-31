@@ -130,7 +130,7 @@ public class FlightServices {
             FOS_URL = FOS_URL + "&nonStop=false";
         }
 
-        FOS_URL = FOS_URL + "&currencyCode=" + flightSearch.getCurrencyCode();
+        FOS_URL = FOS_URL + "&currencyCode=" + flightSearch.getCurrencyCode() + "&max=10";
 
         try {
             WebClient client = WebClient.builder()
@@ -160,25 +160,31 @@ public class FlightServices {
             JsonNode dataArray = root.path("data");
             //JsonNode carriers = root.path("dictionaries").path("carriers");
 
-            float num = 0; //para pruebas
+            float num = 1; //para pruebas
 
             for (JsonNode flightNode : dataArray) {
                 num = num + 1; //para pruebas
 
                 FlightModel flight = new FlightModel();
-                List<FlightSegments> flightsSegmentsList = new ArrayList<>();
+
+                flight.setFlight_id(String.valueOf(num));
+
                 List<FlightPrices> flightsPricesList = new ArrayList<>();
                 List<FlightItineraries> flightsInfoItinerary = new ArrayList<>();
                 JsonNode itinerary = flightNode.path("itineraries");
 
+                float iti_id = 1;
 
                 for (JsonNode itinerary_Seg : itinerary) {
                     FlightItineraries flightPerItinerary = new FlightItineraries();
 
+                    List<FlightSegments> flightsSegmentsList = new ArrayList<>();
+
+                    flightPerItinerary.setItinerate_id(String.valueOf(iti_id));
+                    iti_id = iti_id + 1;
                     flightPerItinerary.setTotalDuration(convertDuration(Duration.parse(itinerary_Seg.path("duration").asText())));
 
                     JsonNode Segments = itinerary_Seg.path("segments");
-                    List<String> waitTimes = new ArrayList<>();
 
                     if (Segments.size() == 2) {
                         String itinerary_dur = itinerary_Seg.path("duration").asText();
@@ -187,10 +193,10 @@ public class FlightServices {
 
                         String resultWaitTime = differenceDurations(itinerary_dur, seg1_dur, seg2_dur);
 
-                        waitTimes.add(resultWaitTime);
+                        flightPerItinerary.setWaitTime(resultWaitTime);
 
                     } else {
-                        waitTimes.add("0");
+                        flightPerItinerary.setWaitTime("0");
                     }
 
                     for (JsonNode flightSegments : Segments) {
@@ -222,7 +228,6 @@ public class FlightServices {
                     }
 
                     flightPerItinerary.setFlightSegments(flightsSegmentsList); //Agrega la lista de segmentos del vuelo por oferta
-                    flightPerItinerary.setWaitTime(waitTimes); //Agrega la lista de los tiempos de espera de cada segmento del itinerario
                     //fli.setFlightSegments(flightsSegmentsList);
                     flightsInfoItinerary.add(flightPerItinerary); // Agregar el intinerario actual a la lista de itinerarios que luego se agrega al modelo del vuelo
                 }

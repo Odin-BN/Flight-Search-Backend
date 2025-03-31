@@ -6,7 +6,7 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FlightModel {
-
+    private String flight_id;
     //private List<FlightSegments> flightSegments;
     private List<FlightPrices> flightPrices;
     private List<FlightItineraries> infoPerItinerary;
@@ -18,14 +18,23 @@ public class FlightModel {
 
     public FlightModel() {};
 
-    public FlightModel(List<FlightPrices> flightPrices, List<FlightItineraries> infoPerItinerary, double totalPrice,
+    public FlightModel(String flight_id, List<FlightPrices> flightPrices, List<FlightItineraries> infoPerItinerary, double totalPrice,
                        double pricePerTraveler, double feesPrice, double basePrice) {
+        this.flight_id = flight_id;
         this.flightPrices = flightPrices;
         this.infoPerItinerary = infoPerItinerary;
         this.totalPrice = totalPrice;
         this.pricePerTraveler = pricePerTraveler;
         this.feesPrice = feesPrice;
         this.basePrice = basePrice;
+    }
+
+    public String getFlight_id() {
+        return flight_id;
+    }
+
+    public void setFlight_id(String flight_id) {
+        this.flight_id = flight_id;
     }
 
     public List<FlightPrices> getFlightPrices() {
