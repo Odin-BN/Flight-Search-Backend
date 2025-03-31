@@ -211,7 +211,8 @@ public class FlightServices {
                         flightSeg.setAirlineCode(flightSegments.path("carrierCode").asText());
                         flightSeg.setAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
                         flightSeg.setOperatingAirlineCode(flightSegments.path("operating").path("carrierCode").asText());
-                        flightSeg.setOperatingAirlineName(dictionary.path("carriers").path(flightSeg.getAirlineCode()).asText());
+                        //checar porque al parecer esta mal
+                        flightSeg.setOperatingAirlineName(dictionary.path("carriers").path(flightSeg.getOperatingAirlineCode()).asText());
 
                         /*String dur = flightSegments.path("duration").asText();
                         Duration durTime = Duration.parse(dur);
@@ -262,15 +263,15 @@ public class FlightServices {
 
                 flights.add(flight);
 
-                //de prueba para checar como se estan guardando los vuelos
-                ObjectMapper objectMapper1 = new ObjectMapper();
+                //imprimir los vuelos para checar como se estan guardando los datos
+                /*ObjectMapper objectMapper1 = new ObjectMapper();
                 try {
                     String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flight);
                     System.out.println(flight_json);
                 } catch (JsonProcessingException e) {
                     System.out.println("Error imprimiendo el JSON");
                     throw new RuntimeException(e);
-                }
+                }*/
                 //private List<String> segmentDurations;
                 //private List<String> layoverTimes;
             }
@@ -324,7 +325,7 @@ public class FlightServices {
 
     public List<FlightModel> getPaginatedFlights(int page, int pageSize) {
         int fromIndex = (page - 1) * pageSize;
-        int toIndex = page * pageSize;
+        int toIndex = Math.min(page * pageSize, flights.size());
 
         if (fromIndex >= flights.size()) {
             return Collections.emptyList();
@@ -334,7 +335,18 @@ public class FlightServices {
 
         List<FlightModel> flights_page = flights.subList(fromIndex, toIndex);
 
-        return setCityNames(flights_page);
+        //List<FlightModel> flights_page1 = setCityNames(flights_page);
+        //Imprimir la lista paginada para checar que este bien
+        ObjectMapper objectMapper1 = new ObjectMapper();
+        try {
+            String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flights_page);
+            System.out.println(flight_json);
+        } catch (JsonProcessingException e) {
+            System.out.println("Error imprimiendo el JSON");
+            throw new RuntimeException(e);
+        }
+
+        return flights_page;
     }
 
     private List<FlightModel> setCityNames(List<FlightModel> flights_page) {
