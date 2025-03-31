@@ -4,6 +4,7 @@ package com.secondbreakabletoy.Flight_Search.controller;
 import com.secondbreakabletoy.Flight_Search.model.FlightModel;
 import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
 import com.secondbreakabletoy.Flight_Search.services.FlightServices;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,24 @@ public class FlightController {
     }
 
     @PostMapping("/FlightSearch")
-    public List<FlightModel> getFlightOffers(@RequestBody FlightSearch flightSearch){
-        return flightServices.getFlightOffers(flightSearch);
+    public ResponseEntity<Void> setFlightOffers(@RequestBody FlightSearch flightSearch){
+        flightServices.getFlightOffers(flightSearch);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/Flights")
+    public ResponseEntity<Void> sortFlights(@RequestParam(required = false, defaultValue = "price") String sortBy1,
+                                        @RequestParam(required = false, defaultValue = "asc") String order1,
+                                        @RequestParam(required = false, defaultValue = "duration") String sortBy2,
+                                        @RequestParam(required = false, defaultValue = "asc") String order2) {
+        flightServices.sortFlightsList(sortBy1, order1, sortBy2, order2);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/Flights")
+    public List<FlightModel> getFlights(@RequestParam(defaultValue = "1") int page) {
+
+        return flightServices.getPaginatedFlights(page, 4);
+
     }
 }

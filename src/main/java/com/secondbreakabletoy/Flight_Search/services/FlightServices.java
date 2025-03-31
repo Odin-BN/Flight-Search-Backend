@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secondbreakabletoy.Flight_Search.model.*;
+import com.sun.jdi.IntegerValue;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -11,10 +12,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Service
@@ -30,6 +28,7 @@ public class FlightServices {
     private final String AIRLINES_URL = "https://test.api.amadeus.com/v1/reference-data/airlines";
     private final String FLIGHT_OFFERS_URL = "https://test.api.amadeus.com/v2/shopping/flight-offers";
     private String jsonResponse;
+    private List<FlightModel> flights = new ArrayList<>();
 
     public FlightServices(WebClient.Builder webClientBuilder){
         this.webClient = webClientBuilder.baseUrl(AUTH_URL).build();
@@ -113,7 +112,7 @@ public class FlightServices {
         }
     }
 
-    public List<FlightModel> getFlightOffers(FlightSearch flightSearch){
+    public void getFlightOffers(FlightSearch flightSearch){
         String token = getAccessToken();
 
         String FOS_URL = "?originLocationCode=" + flightSearch.getOriginLocationCode()
@@ -152,7 +151,8 @@ public class FlightServices {
         //////////////////////////////////////////////////////////////
 
         ObjectMapper objectMapper = new ObjectMapper();
-        List<FlightModel> flights = new ArrayList<>();
+        //List<FlightModel> flights = new ArrayList<>(); reiniciarlo cada que se llama
+        flights = new ArrayList<>();
 
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
@@ -160,7 +160,7 @@ public class FlightServices {
             JsonNode dataArray = root.path("data");
             //JsonNode carriers = root.path("dictionaries").path("carriers");
 
-            float num = 1; //para pruebas
+            float num = 0; //para pruebas
 
             for (JsonNode flightNode : dataArray) {
                 num = num + 1; //para pruebas
@@ -280,9 +280,7 @@ public class FlightServices {
             System.out.println("Error al procesar el JSON");
         }
 
-
-        return flights;
-
+        //sortFlightsList("sortBy1", "order1", "sortBy2", "order2", 1, 4 );
     }
 
     public String differenceDurations(String itinerary_dur, String seg1_dur, String seg2_dur) {
@@ -299,6 +297,76 @@ public class FlightServices {
         long minutes = dur.toMinutes();
 
         return (hours > 0 ? hours + "h " : "") + (minutes > 0? minutes + "m " :"");
+    }
+
+    public void sortFlightsList(String sortBy1, String order1, String sortBy2, String order2) {
+        Comparator<FlightModel> comparator1 = getComparison(sortBy1, order1);
+        Comparator<FlightModel> comparator2 = getComparison(sortBy2, order2);
+
+        flights.sort(comparator1.thenComparing(comparator2));
+    }
+
+    private Comparator<FlightModel> getComparison(String sortBy, String order) {
+        Comparator<FlightModel> comparator = null;
+
+        if ("price".equals(sortBy)) {
+            comparator = Comparator.comparing(FlightModel :: getTotalPrice);
+        } else if ("duration".equals(sortBy)) {
+            comparator = Comparator.comparing(flight -> Duration.parse(flight.getInfoPerItinerary().get(0).getTotalDuration()).toMinutes());
+        }
+
+        if ("desc".equals(order) && comparator != null) {
+            comparator = comparator.reversed();
+        }
+
+        return comparator;
+    }
+
+    public List<FlightModel> getPaginatedFlights(int page, int pageSize) {
+        int fromIndex = (page - 1) * pageSize;
+        int toIndex = page * pageSize;
+
+        if (fromIndex >= flights.size()) {
+            return Collections.emptyList();
+        }
+
+        //agregar que busque el nombre de los vuelos paginados
+
+        List<FlightModel> flights_page = flights.subList(fromIndex, toIndex);
+
+        return setCityNames(flights_page);
+    }
+
+    private List<FlightModel> setCityNames(List<FlightModel> flights_page) {
+        for (FlightModel flightModel : flights_page) {
+            for (FlightItineraries flightItineraries : flightModel.getInfoPerItinerary()) {
+                for (FlightSegments flightSegments : flightItineraries.getFlightSegments()) {
+                    flightSegments.setDepartureCity(CityNameByAirport(flightSegments.getDepartureAirport()));
+                    flightSegments.setArrivalCity(CityNameByAirport(flightSegments.getArrivalAirport()));
+                }
+            }
+        }
+
+        return flights_page;
+    }
+
+    private String CityNameByAirport(String airportCode) {
+        String response = getLocationByID(airportCode);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String CityName;
+
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            CityName = root.path("data").path("address").path("cityName").asText();
+            //accede a la ruta del nombre de la ciudad en base el codigo del aeropuerto
+
+
+        } catch (JsonProcessingException e) {
+            System.out.println("Error obteniendo los nombres de las ciudades");
+            throw new RuntimeException(e);
+        }
+
+        return CityName;
     }
 
 }
