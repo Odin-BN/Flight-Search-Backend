@@ -1,5 +1,7 @@
 package com.secondbreakabletoy.Flight_Search.model;
 
+import java.util.List;
+
 public class FlightSegments {
     private String departureDate;
     private String departureTime;
@@ -17,6 +19,9 @@ public class FlightSegments {
     private String FlightNumber;
     private String AircraftCode;
     private String AircraftName;
+    private List<FlightAmenities> flightAmenities;
+    private int id;
+    private List<FlightPrices> flightPrices;
 
     public FlightSegments() {
     }
@@ -24,7 +29,8 @@ public class FlightSegments {
     public FlightSegments(String departureDate, String departureTime, String arrivalDate, String arrivalTime,
                           String departureAirport, String departureCity, String arrivalAirport, String arrivalCity,
                           String airlineCode, String airlineName, String operatingAirlineCode, String operatingAirlineName,
-                          String duration, String flightNumber, String aircraftCode, String aircraftName) {
+                          String duration, String flightNumber, String aircraftCode, String aircraftName,
+                          List<FlightAmenities> flightAmenities, int id, List<FlightPrices> flightPrices) {
         this.departureDate = departureDate;
         this.departureTime = departureTime;
         this.arrivalDate = arrivalDate;
@@ -41,6 +47,9 @@ public class FlightSegments {
         FlightNumber = flightNumber;
         AircraftCode = aircraftCode;
         AircraftName = aircraftName;
+        this.flightAmenities = flightAmenities;
+        this.id = id;
+        this.flightPrices = flightPrices;
     }
 
     public String getDepartureDate() {
@@ -169,5 +178,29 @@ public class FlightSegments {
 
     public void setAircraftName(String aircraftName) {
         AircraftName = aircraftName;
+    }
+
+    public List<FlightAmenities> getFlightAmenities() {
+        return flightAmenities;
+    }
+
+    public void setFlightAmenities(List<FlightAmenities> flightAmenities) {
+        this.flightAmenities = flightAmenities;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public List<FlightPrices> getFlightPrices() {
+        return flightPrices;
+    }
+
+    public void setFlightPrices(List<FlightPrices> flightPrices) {
+        this.flightPrices = flightPrices;
     }
 }

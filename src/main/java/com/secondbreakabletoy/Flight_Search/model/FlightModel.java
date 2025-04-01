@@ -8,7 +8,6 @@ import java.util.List;
 public class FlightModel {
     private String flight_id;
     //private List<FlightSegments> flightSegments;
-    private List<FlightPrices> flightPrices;
     private List<FlightItineraries> infoPerItinerary;
     //private List<String> layoverTimes;
     private double totalPrice;
@@ -16,12 +15,12 @@ public class FlightModel {
     private double basePrice;
     private double feesPrice;
 
+
     public FlightModel() {};
 
-    public FlightModel(String flight_id, List<FlightPrices> flightPrices, List<FlightItineraries> infoPerItinerary, double totalPrice,
+    public FlightModel(String flight_id, List<FlightItineraries> infoPerItinerary, double totalPrice,
                        double pricePerTraveler, double feesPrice, double basePrice) {
         this.flight_id = flight_id;
-        this.flightPrices = flightPrices;
         this.infoPerItinerary = infoPerItinerary;
         this.totalPrice = totalPrice;
         this.pricePerTraveler = pricePerTraveler;
@@ -35,14 +34,6 @@ public class FlightModel {
 
     public void setFlight_id(String flight_id) {
         this.flight_id = flight_id;
-    }
-
-    public List<FlightPrices> getFlightPrices() {
-        return flightPrices;
-    }
-
-    public void setFlightPrices(List<FlightPrices> flightPrices) {
-        this.flightPrices = flightPrices;
     }
 
     public List<FlightItineraries> getInfoPerItinerary() {

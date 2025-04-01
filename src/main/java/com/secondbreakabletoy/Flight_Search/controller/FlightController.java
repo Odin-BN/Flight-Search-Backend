@@ -51,9 +51,9 @@ public class FlightController {
     }
 
     @GetMapping("/Flights")
-    public List<FlightModel> getFlights(@RequestParam(defaultValue = "1") int page) {
+    public List<FlightModel> getFlights(@RequestParam(defaultValue = "1") String page) {
 
-        return flightServices.getPaginatedFlights(page, 4);
+        return flightServices.getPaginatedFlights(Integer.parseInt(page), 4);
 
     }
 }

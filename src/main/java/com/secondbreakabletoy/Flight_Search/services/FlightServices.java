@@ -129,7 +129,7 @@ public class FlightServices {
             FOS_URL = FOS_URL + "&nonStop=false";
         }
 
-        FOS_URL = FOS_URL + "&currencyCode=" + flightSearch.getCurrencyCode() + "&max=10";
+        FOS_URL = FOS_URL + "&currencyCode=" + flightSearch.getCurrencyCode() + "&max=50";
 
         try {
             WebClient client = WebClient.builder()
@@ -171,9 +171,38 @@ public class FlightServices {
 
                 List<FlightPrices> flightsPricesList = new ArrayList<>();
                 List<FlightItineraries> flightsInfoItinerary = new ArrayList<>();
+                List<FlightAmenities> flightAmenitiesList = new ArrayList<>();
+                JsonNode amenities = flightNode.path("travelerPricings").get(0).path("fareDetailsBySegment").get(0).path("amenities");
                 JsonNode itinerary = flightNode.path("itineraries");
 
                 float iti_id = 1;
+
+                //amenities
+                for (JsonNode amenities_seg : amenities) {
+                    FlightAmenities flightAmenities = new FlightAmenities();
+
+                    flightAmenities.setDescription(amenities_seg.path("description").asText());
+                    flightAmenities.setChargeable(amenities_seg.path("isChargeable").asBoolean());
+
+                    flightAmenitiesList.add(flightAmenities);
+                }
+
+                int seg_id = 1;
+
+                JsonNode pricesBySegment = flightNode.path("travelerPricings").get(0).path("fareDetailsBySegment"); //revisar si el get(0) esta bien
+
+                for (JsonNode PriceSegment : pricesBySegment) {
+                    FlightPrices flightPrices = new FlightPrices();
+                    //los precios por segmento
+                    flightPrices.setCabinType(PriceSegment.path("cabin").asText());
+                    flightPrices.setClassType(PriceSegment.path("class").asText());
+                    flightPrices.setCheckedBagsWeight(PriceSegment.path("includedCheckedBags").path("weight").asText());
+                    flightPrices.setCheckedBagsUnit(PriceSegment.path("includedCheckedBags").path("weightUnit").asText());
+
+                    //Agregar las diferente ammenities
+
+                    flightsPricesList.add(flightPrices);
+                }
 
                 for (JsonNode itinerary_Seg : itinerary) {
                     FlightItineraries flightPerItinerary = new FlightItineraries();
@@ -198,6 +227,7 @@ public class FlightServices {
                     } else {
                         flightPerItinerary.setWaitTime("0");
                     }
+
 
                     for (JsonNode flightSegments : Segments) {
                         FlightSegments flightSeg = new FlightSegments();
@@ -226,6 +256,10 @@ public class FlightServices {
                         flightSeg.setAircraftName(dictionary.path("aircraft").path(flightSeg.getAircraftCode()).asText());
 
                         flightsSegmentsList.add(flightSeg);
+                        flightSeg.setFlightAmenities(flightAmenitiesList);
+                        flightSeg.setId(seg_id);
+                        seg_id = seg_id + 1;
+                        flightSeg.setFlightPrices(flightsPricesList);
                     }
 
                     flightPerItinerary.setFlightSegments(flightsSegmentsList); //Agrega la lista de segmentos del vuelo por oferta
@@ -235,22 +269,7 @@ public class FlightServices {
 
                 flight.setInfoPerItinerary(flightsInfoItinerary); //se agrega la lista de itinerarios al vuelo
 
-                JsonNode pricesBySegment = flightNode.path("travelerPricings").get(0).path("fareDetailsBySegment"); //revisar si el get(0) esta bien
 
-                for (JsonNode PriceSegment : pricesBySegment) {
-                    FlightPrices flightPrices = new FlightPrices();
-                    //los precios por segmento
-                    flightPrices.setCabinType(PriceSegment.path("cabin").asText());
-                    flightPrices.setClassType(PriceSegment.path("class").asText());
-                    flightPrices.setCheckedBagsWeight(PriceSegment.path("includedCheckedBags").path("weight").asText());
-                    flightPrices.setCheckedBagsUnit(PriceSegment.path("includedCheckedBags").path("weightUnit").asText());
-
-                    //Agregar las diferente ammenities
-
-                    flightsPricesList.add(flightPrices);
-                }
-
-                flight.setFlightPrices(flightsPricesList); //Agrega la lista de precios de los segmentos de los vuelos de la oferta
 
                 //Imprimir un valor para probar
                 //System.out.println("Fecha de salida de prueba: " + flight.getDepartureDate_first());
