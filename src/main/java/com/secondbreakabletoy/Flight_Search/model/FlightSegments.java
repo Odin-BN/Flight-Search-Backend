@@ -8,8 +8,10 @@ public class FlightSegments {
     private String arrivalDate;
     private String arrivalTime;
     private String departureAirport;
+    private String departureAirportName;
     private String departureCity; //nombre de la ciudad donde esta el aeropuerto de salida, se consigue el nombre en la pagincacion con otro request
     private String arrivalAirport;
+    private String arrivalAirportName;
     private String arrivalCity;  //nombre de la ciudad donde esta el aeropuerto de llegada, se consigue el nombre en la pagincacion con otro request
     private String airlineCode;
     private String airlineName;
@@ -27,7 +29,8 @@ public class FlightSegments {
     }
 
     public FlightSegments(String departureDate, String departureTime, String arrivalDate, String arrivalTime,
-                          String departureAirport, String departureCity, String arrivalAirport, String arrivalCity,
+                          String departureAirport, String departureAirportName, String departureCity, String arrivalAirport,
+                          String arrivalAirportName, String arrivalCity,
                           String airlineCode, String airlineName, String operatingAirlineCode, String operatingAirlineName,
                           String duration, String flightNumber, String aircraftCode, String aircraftName,
                           List<FlightAmenities> flightAmenities, int id, List<FlightPrices> flightPrices) {
@@ -36,8 +39,10 @@ public class FlightSegments {
         this.arrivalDate = arrivalDate;
         this.arrivalTime = arrivalTime;
         this.departureAirport = departureAirport;
+        this.departureAirportName = departureAirportName;
         this.departureCity = departureCity;
         this.arrivalAirport = arrivalAirport;
+        this.arrivalAirportName = arrivalAirportName;
         this.arrivalCity = arrivalCity;
         this.airlineCode = airlineCode;
         this.airlineName = airlineName;
@@ -92,6 +97,14 @@ public class FlightSegments {
         this.departureAirport = departureAirport;
     }
 
+    public String getDepartureAirportName() {
+        return departureAirportName;
+    }
+
+    public void setDepartureAirportName(String departureAirportName) {
+        this.departureAirportName = departureAirportName;
+    }
+
     public String getDepartureCity() {
         return departureCity;
     }
@@ -106,6 +119,14 @@ public class FlightSegments {
 
     public void setArrivalAirport(String arrivalAirport) {
         this.arrivalAirport = arrivalAirport;
+    }
+
+    public String getArrivalAirportName() {
+        return arrivalAirportName;
+    }
+
+    public void setArrivalAirportName(String arrivalAirportName) {
+        this.arrivalAirportName = arrivalAirportName;
     }
 
     public String getArrivalCity() {

@@ -1,18 +1,22 @@
 package com.secondbreakabletoy.Flight_Search.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secondbreakabletoy.Flight_Search.model.*;
 import com.sun.jdi.IntegerValue;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -29,9 +33,15 @@ public class FlightServices {
     private final String FLIGHT_OFFERS_URL = "https://test.api.amadeus.com/v2/shopping/flight-offers";
     private String jsonResponse;
     private List<FlightModel> flights = new ArrayList<>();
+    private final Map<String, Airport> airports = new HashMap<>();
 
     public FlightServices(WebClient.Builder webClientBuilder){
         this.webClient = webClientBuilder.baseUrl(AUTH_URL).build();
+    }
+
+    @PostConstruct
+    public void init() {
+        loadAirports();
     }
 
     public String getAccessToken(){
@@ -355,34 +365,48 @@ public class FlightServices {
 
         List<FlightModel> flights_page = flights.subList(fromIndex, toIndex);
 
-        //List<FlightModel> flights_page1 = setCityNames(flights_page);
+        List<FlightModel> flights_page1 = setNames(flights_page);
         //Imprimir la lista paginada para checar que este bien
         ObjectMapper objectMapper1 = new ObjectMapper();
         try {
-            String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flights_page);
+            String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flights_page1);
             System.out.println(flight_json);
         } catch (JsonProcessingException e) {
             System.out.println("Error imprimiendo el JSON");
             throw new RuntimeException(e);
         }
 
-        return flights_page;
+        return flights_page1;
     }
 
-    private List<FlightModel> setCityNames(List<FlightModel> flights_page) {
+    private List<FlightModel> setNames(List<FlightModel> flights_page) {
         for (FlightModel flightModel : flights_page) {
             for (FlightItineraries flightItineraries : flightModel.getInfoPerItinerary()) {
                 for (FlightSegments flightSegments : flightItineraries.getFlightSegments()) {
-                    flightSegments.setDepartureCity(CityNameByAirport(flightSegments.getDepartureAirport()));
-                    flightSegments.setArrivalCity(CityNameByAirport(flightSegments.getArrivalAirport()));
+
+                    String departureIata = flightSegments.getDepartureAirport();
+                    String arrivalIata = flightSegments.getArrivalAirport();
+
+                    Airport departureAirport = airports.get(departureIata);
+                    Airport arrivalAirport = airports.get(arrivalIata);
+
+                    if (departureAirport != null) {
+                        flightSegments.setDepartureAirportName(departureAirport.getName());
+                        flightSegments.setDepartureCity(departureAirport.getCity());
+                    }
+
+                    if (arrivalAirport != null) {
+                        flightSegments.setArrivalAirportName(arrivalAirport.getName());
+                        flightSegments.setArrivalCity(arrivalAirport.getCity());
+                    }
                 }
             }
         }
-
         return flights_page;
     }
 
-    private String CityNameByAirport(String airportCode) {
+    //de momento ya no lo uso
+    private String cityNameByAirport(String airportCode) {
         String response = getLocationByID(airportCode);
         ObjectMapper objectMapper = new ObjectMapper();
         String CityName;
@@ -399,6 +423,48 @@ public class FlightServices {
         }
 
         return CityName;
+    }
+
+    private void loadAirports(){
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            InputStream inputStream = getClass().getResourceAsStream("/airportData.json");
+
+
+            Map<String, Map<String, String>> data = objectMapper.readValue(
+                    inputStream, new TypeReference<Map<String, Map<String, String>>>() {
+                    }
+            );
+
+            for (Map.Entry<String, Map<String, String>> entry : data.entrySet()) {
+               Map<String, String> airportData = entry.getValue();
+               airports.put(
+                       airportData.get("iata"),
+                       new Airport(
+                               airportData.get("iata"),
+                               airportData.get("name"),
+                               airportData.get("city")
+                       )
+               );
+            }
+        } catch (Exception e) {
+            System.out.println("Error cargando los aeropuertos");
+            throw new RuntimeException(e);
+        }
+
+    };
+
+    public List<Airport> searchAirports(String query) {
+        if(query == null || query.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String lowerQuery = query.toLowerCase();
+        return airports.values().stream()
+                .filter(a -> a.getIata().toLowerCase().contains(lowerQuery) ||
+                        a.getCity().toLowerCase().contains(lowerQuery))
+                .limit(3)
+                .collect(Collectors.toList());
     }
 
 }

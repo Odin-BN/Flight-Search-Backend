@@ -1,6 +1,7 @@
 package com.secondbreakabletoy.Flight_Search.controller;
 
 
+import com.secondbreakabletoy.Flight_Search.model.Airport;
 import com.secondbreakabletoy.Flight_Search.model.FlightModel;
 import com.secondbreakabletoy.Flight_Search.model.FlightSearch;
 import com.secondbreakabletoy.Flight_Search.services.FlightServices;
@@ -55,5 +56,10 @@ public class FlightController {
 
         return flightServices.getPaginatedFlights(Integer.parseInt(page), 4);
 
+    }
+
+    @GetMapping("/search")
+    public List<Airport> searchAirports(@RequestParam String query) {
+        return flightServices.searchAirports(query);
     }
 }
