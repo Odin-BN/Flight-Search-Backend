@@ -438,14 +438,19 @@ public class FlightServices {
 
             for (Map.Entry<String, Map<String, String>> entry : data.entrySet()) {
                Map<String, String> airportData = entry.getValue();
-               airports.put(
-                       airportData.get("iata"),
-                       new Airport(
-                               airportData.get("iata"),
-                               airportData.get("name"),
-                               airportData.get("city")
-                       )
-               );
+
+               String iataCode = airportData.get("iata");
+               if (iataCode != null && !iataCode.isEmpty()) {
+                   airports.put(
+                           airportData.get("iata"),
+                           new Airport(
+                                   airportData.get("iata"),
+                                   airportData.get("name"),
+                                   airportData.get("city")
+                           )
+                   );
+               }
+
             }
         } catch (Exception e) {
             System.out.println("Error cargando los aeropuertos");
