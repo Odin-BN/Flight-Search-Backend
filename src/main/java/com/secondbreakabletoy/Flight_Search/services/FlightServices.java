@@ -114,11 +114,12 @@ public class FlightServices {
 
     public void getFlightOffers(FlightSearch flightSearch){
         String token = getAccessToken();
+        //System.out.println(flightSearch.getReturnDate());
 
         String FOS_URL = "?originLocationCode=" + flightSearch.getOriginLocationCode()
                 + "&destinationLocationCode=" + flightSearch.getDestinationLocationCode()
                 + "&departureDate=" + flightSearch.getDepartureDate();
-        if (flightSearch.getReturnDate() != null){
+        if (!Objects.equals(flightSearch.getReturnDate(), "")){
             FOS_URL = FOS_URL + "&returnDate=" + flightSearch.getReturnDate();
         }
         FOS_URL = FOS_URL + "&adults=" + flightSearch.getAdults();
