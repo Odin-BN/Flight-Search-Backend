@@ -123,6 +123,7 @@ public class FlightServices {
     }
 
     public void getFlightOffers(FlightSearch flightSearch){
+        flights = new ArrayList<>();
         String token = getAccessToken();
         //System.out.println(flightSearch.getReturnDate());
 
@@ -163,7 +164,6 @@ public class FlightServices {
 
         ObjectMapper objectMapper = new ObjectMapper();
         //List<FlightModel> flights = new ArrayList<>(); reiniciarlo cada que se llama
-        flights = new ArrayList<>();
 
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
@@ -222,7 +222,7 @@ public class FlightServices {
 
                     flightPerItinerary.setItinerate_id(String.valueOf(iti_id));
                     iti_id = iti_id + 1;
-                    flightPerItinerary.setTotalDuration(convertDuration(Duration.parse(itinerary_Seg.path("duration").asText())));
+                    flightPerItinerary.setTotalDuration(itinerary_Seg.path("duration").asText());
 
                     JsonNode Segments = itinerary_Seg.path("segments");
 
@@ -334,7 +334,8 @@ public class FlightServices {
         Comparator<FlightModel> comparator1 = getComparison(sortBy1, order1);
         Comparator<FlightModel> comparator2 = getComparison(sortBy2, order2);
 
-        flights.sort(comparator1.thenComparing(comparator2));
+        flights.sort(comparator1.thenComparing(comparator2)); //agregar que esto solo sea si estan los dos presionados
+        //probar con boton de 3 estados
     }
 
     private Comparator<FlightModel> getComparison(String sortBy, String order) {
