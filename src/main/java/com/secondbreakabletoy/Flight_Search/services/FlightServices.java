@@ -359,6 +359,7 @@ public class FlightServices {
         int toIndex = Math.min(page * pageSize, flights.size());
 
         if (fromIndex >= flights.size()) {
+            System.out.println("Lista vacia devuelta");
             return Collections.emptyList();
         }
 

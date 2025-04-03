@@ -8,6 +8,7 @@ import com.secondbreakabletoy.Flight_Search.services.FlightServices;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -53,8 +54,21 @@ public class FlightController {
 
     @GetMapping("/Flights")
     public List<FlightModel> getFlights(@RequestParam(defaultValue = "1") String page) {
+        List<FlightModel> flights = flightServices.getPaginatedFlights(Integer.parseInt(page), 4);
+        int retries = 0;
 
-        return flightServices.getPaginatedFlights(Integer.parseInt(page), 4);
+        while (flights.isEmpty() && retries < 60) {
+            try {
+                Thread.sleep(1000);
+                retries++;
+                flights = flightServices.getPaginatedFlights(Integer.parseInt(page), 4);
+
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+        return flights;
 
     }
 
