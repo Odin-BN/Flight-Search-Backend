@@ -24,7 +24,7 @@ public class FlightAmenities {
         return isChargeable;
     }
 
-    public void setChargeable(boolean chargeable) {
-        isChargeable = chargeable;
+    public void setChargeable(boolean isChargeable) {
+        this.isChargeable = isChargeable;
     }
 }
