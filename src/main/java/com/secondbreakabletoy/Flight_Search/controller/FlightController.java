@@ -54,10 +54,11 @@ public class FlightController {
 
     @GetMapping("/Flights")
     public List<FlightModel> getFlights(@RequestParam(defaultValue = "1") String page) {
+        //System.out.println(page);
         List<FlightModel> flights = flightServices.getPaginatedFlights(Integer.parseInt(page), 4);
         int retries = 0;
 
-        while (flights.isEmpty() && retries < 60) {
+        while (flights.isEmpty() && retries < 30) {
             try {
                 Thread.sleep(1000);
                 retries++;

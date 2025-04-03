@@ -367,16 +367,16 @@ public class FlightServices {
 
         List<FlightModel> flights_page = flights.subList(fromIndex, toIndex);
 
-        List<FlightModel> flights_page1 = setNames(flights_page);
+        List<FlightModel> flights_page1 = setNames(flights_page); //checar si SetNames puede ser el problema
         //Imprimir la lista paginada para checar que este bien
-        ObjectMapper objectMapper1 = new ObjectMapper();
+        /*ObjectMapper objectMapper1 = new ObjectMapper();
         try {
             String flight_json = objectMapper1.writerWithDefaultPrettyPrinter().writeValueAsString(flights_page1);
             System.out.println(flight_json);
         } catch (JsonProcessingException e) {
             System.out.println("Error imprimiendo el JSON");
             throw new RuntimeException(e);
-        }
+        }*/
 
         return flights_page1;
     }
